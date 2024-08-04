@@ -9,7 +9,7 @@ app = FastAPI()
 
 mol_db = []
 
-app.get("/")
+@app.get("/")
 def get_server():
     return {"server_id": getenv("SERVER_ID", "1")}
 
