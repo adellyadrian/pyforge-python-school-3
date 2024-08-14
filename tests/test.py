@@ -79,10 +79,3 @@ def test_upload_file_invalid_json():
     response = requests.post(ENDPOINT + "/upload_file/", files=files)
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid JSON file"}
-
-
-def test_upload_file_invalid_json():
-    files = {'file': ('molecules.json', '{"mol_id": 5, "name": "C1=CC=CC=C1"', 'application/json')}
-    response = requests.post(ENDPOINT + "/upload_file/", files=files)
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Invalid JSON file"}
