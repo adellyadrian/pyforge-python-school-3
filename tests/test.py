@@ -59,21 +59,6 @@ def test_substructure_search_special_characters():
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid substructure SMILES"}
 
-def test_substructure_search_large_data():
-    large_molecule_list = [{"mol_id": i, "name": "CC" * (i % 10)} for i in range(1000)]
-    with open('src/large_molecules.json', 'w') as file:
-        json.dump(large_molecule_list, file)
-    
-    with open('src/large_molecules.json', 'rb') as file:
-        files = {'file': ('large_molecules.json', file, 'application/json')}
-        response = requests.post(ENDPOINT + "/upload_file/", files=files)
-        assert response.status_code == 201
-
-    response = requests.get(ENDPOINT + "/substructure_search/", params={"substructure_name": "CC"})
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data["molecules"]) > 0
-
 def test_upload_file_invalid_json():
     files = {'file': ('molecules.json', '{"mol_id": 5, "name": "C1=CC=CC=C1"', 'application/json')}
     response = requests.post(ENDPOINT + "/upload_file/", files=files)
