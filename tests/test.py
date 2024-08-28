@@ -1,6 +1,6 @@
 import requests
 
-ENDPOINT = "http://localhost:8011"
+ENDPOINT = "http://localhost:8000"
 
 
 def test_upload_file_success():
@@ -16,7 +16,7 @@ def test_upload_file_success():
 def upload_molecules_json(filename='molecules.json'):
     """Helper function to upload a molecules JSON file."""
     with open(filename, 'rb') as file:
-        files = {'file': (filename, file, 'application/json')}
+        files = {'file': ('molecules.json', file, 'application/json')}
         response = requests.post(ENDPOINT + "/upload_file/", files=files)
     return response
 
