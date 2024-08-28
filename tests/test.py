@@ -1,6 +1,6 @@
 import requests
 
-ENDPOINT = "http://localhost:8000"
+ENDPOINT = "http://localhost:8011"
 
 
 def test_upload_file_success():
