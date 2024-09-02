@@ -9,7 +9,11 @@ from molecules.dao import MoleculeDAO
 from typing import List, Dict
 from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    filename='app.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
