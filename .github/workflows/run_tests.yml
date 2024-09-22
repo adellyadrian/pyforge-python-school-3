@@ -67,80 +67,35 @@ jobs:
     needs: [lint, cache]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-
-      - name: Start Docker containers
-        run: docker-compose up -d
-
-      - name: Wait for Redis to be ready
-        run: |
-          for i in {1..30}; do
-            if docker-compose exec -T redis redis-cli ping | grep -q PONG; then
-              echo "Redis is ready"
-              break
-            fi
-            echo "Waiting for Redis..."
-            sleep 1
-          done
-        shell: bash
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          for i in {1..60}; do
-            if docker-compose exec -T db pg_isready -U user; then
-              echo "PostgreSQL is ready"
-              break
-            fi
-            echo "Waiting for PostgreSQL..."
-            sleep 1
-          done
-        shell: bash
-
-      - name: Install Python dependencies
-        run: docker-compose exec -T web1 pip install -r requirements.txt
-
-      - name: Run Alembic migrations
-        run: docker-compose exec -T web1 alembic upgrade head
-        
-      - name: Run tests with pytest
-        run: docker-compose exec -T web1 pytest tests/test.py -vv
-        
-      - name: Shutdown Docker containers
-        if: always()
-        run: docker-compose down
-  deploy_aws:
-    name: Deploy to AWS EC2
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install AWS CLI
-        run: sudo apt-get install awscli
-
-      - name: Create .ssh directory and known_hosts file
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Upload Code to EC2
-        run: |
-          scp -i /tmp/ec2-ssh-key.pem -r ./Desktop/pyforge-python-school-3 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/app
-      - name: SSH into EC2 and Run Docker Compose
-        uses: appleboy/ssh-action@v0.1.0
+      - name: SSH into EC2 and deploy
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /app
-            docker-compose up -d
+            sudo apt update -y
+            sudo apt install -y python3 python3-pip
+            cd /home/ec2-user
+            git clone https://github.com/adellyadrian/pyforge-python-school-3.git
+            cd pyforge-python-school-3
+            pip3 install -r requirements.txt
+            uvicorn main:app --host 0.0.0.0 --port 8000
+
+      - name: Copy code to EC2 using scp
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./*"
+          target: "/home/ec2-user/pyforge-python-school-3"
+
