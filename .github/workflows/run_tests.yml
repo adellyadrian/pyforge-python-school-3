@@ -129,7 +129,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
-
+      - name: Prepare SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > private_key.pem
+          chmod 600 private_key.pem
       - name: SSH into EC2 and deploy
         uses: appleboy/ssh-action@master
         with:
