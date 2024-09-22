@@ -116,7 +116,6 @@ jobs:
       - name: Shutdown Docker containers
         if: always()
         run: docker-compose down
-    
   deploy_aws:
     name: Deploy to AWS EC2
     runs-on: ubuntu-latest
@@ -128,15 +127,13 @@ jobs:
       - name: Install AWS CLI
         run: sudo apt-get install awscli
 
-      - name: Create SSH Key
-        run: echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem && chmod 600 /tmp/ec2_key.pem
+      - name: Add EC2 host to known_hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Upload Code to EC2
         run: |
           scp -i /tmp/ec2_key.pem -r ./Desktop/pyforge-python-school-3 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/app
-
-      - name: Remove SSH Key
-        run: rm /tmp/ec2_key.pem
 
       - name: SSH into EC2 and Run Docker Compose
         uses: appleboy/ssh-action@v0.1.0
@@ -147,4 +144,3 @@ jobs:
           script: |
             cd /app
             docker-compose up -d
-
