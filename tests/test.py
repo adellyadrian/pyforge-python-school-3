@@ -63,4 +63,3 @@ def test_delete_molecule():
     response = requests.delete(ENDPOINT + "/molecules/7")
     assert response.status_code == 200
     assert response.json() == {"message": "The molecule with id 7 is deleted!"}
-###
