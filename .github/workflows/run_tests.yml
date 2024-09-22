@@ -67,6 +67,61 @@ jobs:
     needs: [lint, cache]
     steps:
       - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Start Docker containers
+        run: docker-compose up -d
+
+      - name: Wait for Redis to be ready
+        run: |
+          for i in {1..30}; do
+            if docker-compose exec -T redis redis-cli ping | grep -q PONG; then
+              echo "Redis is ready"
+              break
+            fi
+            echo "Waiting for Redis..."
+            sleep 1
+          done
+        shell: bash
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..60}; do
+            if docker-compose exec -T db pg_isready -U user; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL..."
+            sleep 1
+          done
+        shell: bash
+
+      - name: Install Python dependencies
+        run: docker-compose exec -T web1 pip install -r requirements.txt
+
+      - name: Run Alembic migrations
+        run: docker-compose exec -T web1 alembic upgrade head
+        
+      - name: Run tests with pytest
+        run: docker-compose exec -T web1 pytest tests/test.py -vv
+        
+      - name: Shutdown Docker containers
+        if: always()
+        run: docker-compose down
+  deploy_aws:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout code
         uses: actions/checkout@v3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -98,4 +153,3 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./*"
           target: "/home/ec2-user/pyforge-python-school-3"
-
