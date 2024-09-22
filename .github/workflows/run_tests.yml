@@ -1,4 +1,4 @@
-name: Run tests workflow
+name: CI/CD Workflow
 
 on:
   push:
@@ -116,3 +116,28 @@ jobs:
       - name: Shutdown Docker containers
         if: always()
         run: docker-compose down
+    
+  deploy_aws:
+      name: Deploy to AWS EC2
+      runs-on: ubuntu-latest
+      needs: [test]
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Install AWS CLI
+          run: sudo apt-get install awscli
+
+        - name: Upload Code to EC2
+          run: |
+            scp -i ${{ secrets.EC2_SSH_KEY }} -r ./Desktop ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/myapp
+
+        - name: SSH into EC2 and Run Docker Compose
+          uses: appleboy/ssh-action@v0.1.0
+          with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            script: |
+              cd ~/myapp
+              docker-compose up -d
