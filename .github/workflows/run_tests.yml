@@ -127,8 +127,9 @@ jobs:
       - name: Install AWS CLI
         run: sudo apt-get install awscli
 
-      - name: Add EC2 host to known_hosts
+      - name: Create .ssh directory and known_hosts file
         run: |
+          mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Upload Code to EC2
