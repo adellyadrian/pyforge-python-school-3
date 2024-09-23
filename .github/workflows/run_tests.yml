@@ -139,7 +139,6 @@ jobs:
           cd /home/ubuntu
           git clone https://github.com/adellyadrian/pyforge-python-school-3.git
           cd pyforge-python-school-3
-          pip3 install -r requirements.txt
           EOF
       - name: Copy code to EC2 using scp
         run: |
