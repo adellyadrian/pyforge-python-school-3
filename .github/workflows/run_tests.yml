@@ -138,8 +138,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ec2-ssh-key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           cd /home/ubuntu
           git clone https://github.com/adellyadrian/pyforge-python-school-3.git
-          cd pyforge-python-school-3
+          cd app
           EOF
       - name: Copy code to EC2 using scp
         run: |
-          scp -i ec2-ssh-key.pem -o StrictHostKeyChecking=no ./* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/pyforge-python-school-3
+          scp -i ec2-ssh-key.pem -o StrictHostKeyChecking=no ./* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/app
