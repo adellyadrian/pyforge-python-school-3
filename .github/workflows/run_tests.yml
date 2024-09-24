@@ -137,9 +137,6 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /path/to/your/app
-          git pull origin main  # Pull the latest changes
-          # Install any required software or dependencies
-          # For example: pip install -r requirements.txt
-          # Start your application
-          # Example for running a Python app
-          nohup python app.py &  # Run your application in the background
+          git pull origin main
+          pip install -r requirements.txt
+          nohup python main.py
