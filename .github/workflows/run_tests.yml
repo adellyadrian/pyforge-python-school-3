@@ -135,6 +135,4 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           host: ec2-3-147-27-92.us-east-2.compute.amazonaws.com
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "."
+
