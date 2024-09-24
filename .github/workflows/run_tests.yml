@@ -139,6 +139,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "."
           target: "/home/adellyn/myproject"
+          debug: true
 
       - name: Install required software and run the application
         uses: appleboy/ssh-action@master
