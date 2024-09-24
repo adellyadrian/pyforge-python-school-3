@@ -131,4 +131,4 @@ jobs:
     
     - name: SSH into EC2 and run tests
       run: |
-        ssh -i ~/.ssh/ec2-ssh-key.pem ubuntu@ec2-3-147-27-92.us-east-2.compute.amazonaws.com "cd /path/to/tests && ./run_tests.sh"
+        ssh -i "/Users/adellynadrian/Desktop/ec2-ssh-key.pem" ubuntu@ec2-3-147-27-92.us-east-2.compute.amazonaws.com
