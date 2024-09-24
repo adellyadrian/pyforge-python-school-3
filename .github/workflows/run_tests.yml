@@ -26,15 +26,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Install flake8
-        run: |
-          pip install flake8
+        run: pip install flake8
 
       - name: Run flake8
-        run: |
-          flake8 .
+        run: flake8 .
       
       - name: Cache pip
         uses: actions/cache@v3
@@ -49,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -67,7 +65,7 @@ jobs:
     needs: [lint, cache]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -90,7 +88,6 @@ jobs:
             echo "Waiting for Redis..."
             sleep 1
           done
-        shell: bash
 
       - name: Wait for PostgreSQL to be ready
         run: |
@@ -102,7 +99,6 @@ jobs:
             echo "Waiting for PostgreSQL..."
             sleep 1
           done
-        shell: bash
 
       - name: Install Python dependencies
         run: docker-compose exec -T web1 pip install -r requirements.txt
@@ -116,19 +112,20 @@ jobs:
       - name: Shutdown Docker containers
         if: always()
         run: docker-compose down
+
   deploy-aws:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2-ssh-key.pem
+          chmod 600 ~/.ssh/ec2-ssh-key.pem
     
-    - name: Set up SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2-ssh-key.pem
-        chmod 600 ~/.ssh/ec2-ssh-key.pem
-    
-    - name: SSH into EC2 and run tests
-      run: |
-        ssh -i "/Users/adellynadrian/Desktop/ec2-ssh-key.pem" ubuntu@ec2-3-147-27-92.us-east-2.compute.amazonaws.com
+      - name: SSH into EC2 and run tests
+        run: |
+          ssh -i ~/.ssh/ec2-ssh-key.pem ubuntu@ec2-3-147-27-92.us-east-2.compute.amazonaws.com "cd /path/to/tests && ./run_tests.sh"
