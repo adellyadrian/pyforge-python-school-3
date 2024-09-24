@@ -138,7 +138,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "."
-          target: "/path/to/target/directory"
+          target: "/home/adellyn/myproject/"
 
       - name: Install required software and run the application
         uses: appleboy/ssh-action@master
@@ -147,6 +147,6 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /path/to/target/directory
+            cd /home/adellyn/myproject/
             pip install -r requirements.txt
             nohup python src.main.py & 
