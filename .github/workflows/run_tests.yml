@@ -137,3 +137,5 @@ jobs:
           host: ec2-3-147-27-92.us-east-2.compute.amazonaws.com
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          source: "."
+          target: "/home/adellyn/myproject/"
