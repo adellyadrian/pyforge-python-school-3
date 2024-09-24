@@ -146,7 +146,3 @@ jobs:
           host: ec2-3-147-27-92.us-east-2.compute.amazonaws.com
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/adellyn/myproject/
-            pip install -r requirements.txt
-            nohup python src.main.py & 
