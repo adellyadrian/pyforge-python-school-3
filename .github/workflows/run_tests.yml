@@ -143,8 +143,8 @@ jobs:
       - name: Connect to EC2 and install dependencies
         uses: appleboy/ssh-action@v0.1.2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ec2-3-138-36-11.us-east-2.compute.amazonaws.com
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo apt-get update
@@ -154,8 +154,8 @@ jobs:
       - name: Run the application
         uses: appleboy/ssh-action@v0.1.2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ec2-3-138-36-11.us-east-2.compute.amazonaws.com
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/myproject
