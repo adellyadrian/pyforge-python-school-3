@@ -16,8 +16,11 @@ DB_URL = getenv("DB_URL")
 
 
 def extract_data(**kwargs):
-    logging.info("Extracting data for the current day")
-    query = "SELECT SMILES, column2, column3 FROM molecules_table WHERE date = CURRENT_DATE"
+    ti = kwargs['ti']
+    execution_date = ti.execution_date
+    logging.info(f"Extracting data for the current day. Execution date: {execution_date}")
+    
+    query = f"SELECT SMILES, column2, column3 FROM molecules_table WHERE date = '{execution_date.date()}'"
     engine = create_engine(DB_URL)
     df = pd.read_sql(query, con=engine)
     return df.to_dict()
@@ -37,25 +40,28 @@ def transform_data(**kwargs):
 
 def save_to_s3(**kwargs):
     ti = kwargs['ti']
+    execution_date = ti.execution_date
+    logging.info(f"Saving data to S3 for execution date: {execution_date}")
+    
     data = ti.xcom_pull(task_ids='transform_data')
     df = pd.DataFrame(data)
     
-    filepath = '/tmp/molecules_data.xlsx'
+    filepath = f'/tmp/molecules_data_{execution_date.date()}.xlsx'
     df.to_excel(filepath, index=False)
     
-    logging.info("Uploading file to S3.")
+    logging.info(f"Uploading file to S3: molecules_data_{execution_date.date()}.xlsx")
     s3 = boto3.client('s3',
                       endpoint_url='http://minio:9000',
                       aws_access_key_id='minio_access_key',
                       aws_secret_access_key='minio_secret_key')
     
     bucket_name = 'my-bucket'
-    s3.upload_file(filepath, bucket_name, 'molecules_data.xlsx')
+    s3.upload_file(filepath, bucket_name, f'molecules_data_{execution_date.date()}.xlsx')
 
 default_args = {
-    'owner': 'airflow',
+    'owner': 'Adelina',
     'depends_on_past': False,
-    'start_date': datetime(2023, 1, 1),
+    'start_date': datetime(2024, 6, 10),
     'retries': 1,
 }
 
