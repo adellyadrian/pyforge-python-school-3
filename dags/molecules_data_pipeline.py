@@ -1,0 +1,96 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime
+import pandas as pd
+import boto3
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+import logging
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+from os import getenv
+
+
+load_dotenv(".env")
+DB_URL = getenv("DB_URL")
+
+
+def extract_data(**kwargs):
+    ti = kwargs['ti']
+    execution_date = ti.execution_date
+    logging.info(f"Extract data. Execution date: {execution_date}")
+    
+    query = f"SELECT molecules FROM molecules_db WHERE date = :date"
+    engine = create_engine(DB_URL)
+    df = pd.read_sql(query, con=engine, params={"date": execution_date.date()})
+    return df.to_dict()
+
+def transform_data(**kwargs):
+    ti = kwargs['ti']
+    data = ti.xcom_pull(task_ids='extract_data')
+    df = pd.DataFrame(data)
+    logging.info("Transform data")
+    df['MolecularWeight'] = df['molecules'].apply(lambda x: Descriptors.MolWt(Chem.MolFromSmiles(x)))
+    df['LogP'] = df['molecules'].apply(lambda x: Descriptors.MolLogP(Chem.MolFromSmiles(x)))
+    df['TPSA'] = df['molecules'].apply(lambda x: Descriptors.TPSA(Chem.MolFromSmiles(x)))
+    df['HDonors'] = df['molecules'].apply(lambda x: Descriptors.NumHDonors(Chem.MolFromSmiles(x)))
+    df['HAcceptors'] = df['molecules'].apply(lambda x: Descriptors.NumHAcceptors(Chem.MolFromSmiles(x)))
+    df['Lipinski'] = (df['MolecularWeight'] < 500) & (df['LogP'] < 5) & (df['HDonors'] <= 5) & (df['HAcceptors'] <= 10)
+    return df.to_dict()
+
+def save_to_s3(**kwargs):
+    ti = kwargs['ti']
+    execution_date = ti.execution_date
+    logging.info(f"Save data to S3 for execution date: {execution_date}")
+    
+    data = ti.xcom_pull(task_ids='transform_data')
+    df = pd.DataFrame(data)
+    
+    filepath = f'/tmp/molecules_data_{execution_date.date()}.xlsx'
+    df.to_excel(filepath, index=False)
+    
+    logging.info(f"Upload file to S3: molecules_data_{execution_date.date()}.xlsx")
+    s3 = boto3.client('s3',
+                      endpoint_url='http://minio:9000',
+                      aws_access_key_id='minio_access_key',
+                      aws_secret_access_key='minio_secret_key')
+    
+    bucket_name = 'my-bucket'
+    s3.upload_file(filepath, bucket_name, f'molecules_data_{execution_date.date()}.xlsx')
+
+default_args = {
+    'owner': 'Adelina',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 6, 10),
+    'retries': 1,
+}
+
+dag = DAG(
+    'molecules_data_pipeline',
+    default_args=default_args,
+    description='A DAG to process molecular data and upload it to S3',
+    schedule_interval='@daily',
+)
+
+task1 = PythonOperator(
+    task_id='extract_data',
+    python_callable=extract_data,
+    provide_context=True,
+    dag=dag,
+)
+
+task2 = PythonOperator(
+    task_id='transform_data',
+    python_callable=transform_data,
+    provide_context=True,
+    dag=dag,
+)
+
+task3 = PythonOperator(
+    task_id='save_to_s3',
+    python_callable=save_to_s3,
+    provide_context=True,
+    dag=dag,
+)
+
+task1 >> task2 >> task3

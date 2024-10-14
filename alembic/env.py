@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import os
 from os.path import dirname, abspath
 import sys
-from database import Base
+from src.database import Base
 
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 # this is the Alembic Config object, which provides

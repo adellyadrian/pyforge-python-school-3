@@ -13,3 +13,5 @@ python-dotenv
 pydantic-settings
 redis
 celery[redis]
+pandas
+boto3

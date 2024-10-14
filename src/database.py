@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Annotated
-from config import get_db_url
+from src.config import get_db_url
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
